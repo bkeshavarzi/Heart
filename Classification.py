@@ -31,7 +31,9 @@ def plot_confusion_matrix(model, X_train, X_test, Y_train, Y_test):
     import seaborn as sns
     import matplotlib.pyplot as plt 
     import numpy as np
-
+    import warnings
+    warnings.filterwarnings("ignore")
+    
     print(str(type(model)).split('.')[-1].split("\'")[0])
     st = str(type(model)).split('.')[-1].split("\'")[0]
 
@@ -56,28 +58,28 @@ def plot_confusion_matrix(model, X_train, X_test, Y_train, Y_test):
     sns.heatmap(conf_data_test,  ax = ax[1], annot=True)
 
     ax[0].tick_params(axis='both',labelsize=16)
-    ax[0].set_xlabel('Measured', fontsize= 18)
-    ax[0].set_ylabel('Predicted', fontsize= 18)
-    ax[0].set_title('Train Set' + 'Model = ' + st,fontsize= 22)
+    ax[0].set_ylabel('Measured', fontsize= 18)
+    ax[0].set_xlabel('Predicted', fontsize= 18)
+    ax[0].set_title('Train Set',fontsize= 22)
 
     ax[1].tick_params(axis='both',labelsize=16)
-    ax[1].set_xlabel('Measured', fontsize= 18)
-    ax[1].set_ylabel('Predicted', fontsize= 18)
-    ax[1].set_title('Test Set'+ 'Model = ' + st,fontsize= 22);
+    ax[1].set_ylabel('Measured', fontsize= 18)
+    ax[1].set_xlabel('Predicted', fontsize= 18)
+    ax[1].set_title('Test Set',fontsize= 22);
 
     fig, ax = plt.subplots(1,2,figsize= (18,6))
     sns.heatmap(conf_train_norm, ax = ax[0], annot=True)
     sns.heatmap(conf_test_norm,  ax = ax[1], annot=True)
 
     ax[0].tick_params(axis='both',labelsize=16)
-    ax[0].set_xlabel('Measured', fontsize= 18)
-    ax[0].set_ylabel('Predicted', fontsize= 18)
-    ax[0].set_title('Train Set (Percent)'+ 'Model = ' + st,fontsize= 22)
+    ax[0].set_ylabel('Measured', fontsize= 18)
+    ax[0].set_xlabel('Predicted', fontsize= 18)
+    ax[0].set_title('Train Set (Percent)',fontsize= 22)
 
     ax[1].tick_params(axis='both',labelsize=16)
-    ax[1].set_xlabel('Measured', fontsize= 18)
-    ax[1].set_ylabel('Predicted', fontsize= 18)
-    ax[1].set_title('Test Set (Percent)'+ 'Model = ' + st,fontsize= 22);
+    ax[1].set_ylabel('Measured', fontsize= 18)
+    ax[1].set_xlabel('Predicted', fontsize= 18)
+    ax[1].set_title('Test Set (Percent)',fontsize= 22);
 
 def model_fit2(model, X_train, X_test, Y_train, Y_test, st = ""):
     
@@ -127,9 +129,15 @@ def get_precision_recall(model, X_train, X_test, Y_train, Y_test, iClass):
     import sklearn
     from sklearn.metrics import precision_score, recall_score, f1_score, precision_recall_curve, roc_curve, roc_auc_score
     from sklearn.model_selection import cross_val_predict
+    import warnings
+    warnings.filterwarnings("ignore")
 
-    Y_scores_train = cross_val_predict(model, X_train, Y_train, cv = 3, method = "decision_function")
-    Y_scores_test  = cross_val_predict(model, X_test, Y_test,   cv = 3, method = "decision_function")
+    try:
+        Y_scores_train = cross_val_predict(model, X_train, Y_train, cv = 3, method = "decision_function")
+        Y_scores_test  = cross_val_predict(model, X_test, Y_test,   cv = 3, method = "decision_function")
+    except:
+        Y_scores_train = cross_val_predict(model, X_train, Y_train, cv = 3, method = "predict_proba")
+        Y_scores_test  = cross_val_predict(model, X_test, Y_test,   cv = 3, method = "predict_proba")
 
     Y_scores_train = Y_scores_train[:,iClass]
     Y_scores_test  = Y_scores_test[:,iClass]
@@ -163,44 +171,42 @@ def get_precision_recall(model, X_train, X_test, Y_train, Y_test, iClass):
     df_train = pd.DataFrame(data = data_train, columns=['Precision', 'Recall', 'Threshold'])
     df_test  = pd.DataFrame(data = data_test,  columns=['Precision', 'Recall', 'Threshold'])
 
-    fig, axis = plt.subplots(1,1,figsize=(10,8))
-    sns.lineplot(data = df_train, x = 'Threshold', y = 'Precision', color = 'red', marker='o', label = 'Precision', ax = axis)
-    sns.lineplot(data = df_train, x = 'Threshold', y = 'Recall', color = 'blue', marker='s', label = 'Recall', ax = axis)
-    axis.set_xlabel('Threshold', fontsize = 18)
-    axis.set_ylabel('Score (Training Set)', fontsize = 18)
-    axis.tick_params(axis='both',labelsize = 16)
-    axis.set_title('Precision, Recall curve for Class ' + str(iClass), fontsize = 20)
-    axis.grid();
+    fig, axis = plt.subplots(1,2,figsize=(18,8))
+    sns.lineplot(data = df_train, x = 'Threshold', y = 'Precision', color = 'red', marker='o', label = 'Precision', ax = axis[0])
+    sns.lineplot(data = df_train, x = 'Threshold', y = 'Recall', color = 'blue', marker='s', label = 'Recall', ax = axis[0])
+    axis[0].set_xlabel('Threshold', fontsize = 18)
+    axis[0].set_ylabel('Score (Training Set)', fontsize = 18)
+    axis[0].tick_params(axis='both',labelsize = 16)
+    axis[0].set_title('Precision, Recall curve for Class ' + str(iClass), fontsize = 20)
+    axis[0].grid()
 
-    fig, axis = plt.subplots(1,1,figsize=(10,8))
-    sns.lineplot(data = df_test, x = 'Threshold', y = 'Precision', color = 'red', marker='o', label = 'Precision', ax = axis)
-    sns.lineplot(data = df_test, x = 'Threshold', y = 'Recall', color = 'blue', marker='s', label = 'Recall', ax = axis)
-    axis.set_xlabel('Threshold', fontsize = 18)
-    axis.set_ylabel('Score (Test set)', fontsize = 18)
-    axis.tick_params(axis='both',labelsize = 16)
-    axis.set_title('Precision, Recall curve for Class ' + str(iClass), fontsize = 20)
-    axis.grid();
+    sns.lineplot(data = df_test, x = 'Threshold', y = 'Precision', color = 'red', marker='o', label = 'Precision', ax = axis[1])
+    sns.lineplot(data = df_test, x = 'Threshold', y = 'Recall', color = 'blue', marker='s', label = 'Recall', ax = axis[1])
+    axis[1].set_xlabel('Threshold', fontsize = 18)
+    axis[1].set_ylabel('Score (Test set)', fontsize = 18)
+    axis[1].tick_params(axis='both',labelsize = 16)
+    axis[1].set_title('Precision, Recall curve for Class ' + str(iClass), fontsize = 20)
+    axis[1].grid()
 
-    fig, axis = plt.subplots(1,1,figsize=(10,8))
-    sns.lineplot(data = df_train, x = 'Recall', y = 'Precision', color = 'red', marker='o', label = 'Train', ax = axis)
-    sns.lineplot(data = df_test, x = 'Recall', y = 'Precision', color = 'blue', marker='s', label = 'Test', ax = axis)
-    axis.set_xlabel('Recall', fontsize = 18)
-    axis.set_ylabel('Precision', fontsize = 18)
-    axis.tick_params(axis='both',labelsize = 16)
-    axis.set_title('Recall vs. Precision curve for Class ' + str(iClass), fontsize = 20)
-    axis.grid();
-    
+    fig, axis = plt.subplots(1,2,figsize=(18,8))
+    sns.lineplot(data = df_train, x = 'Recall', y = 'Precision', color = 'red', marker='o', label = 'Train', ax = axis[0])
+    sns.lineplot(data = df_test, x = 'Recall', y = 'Precision', color = 'blue', marker='s', label = 'Test', ax = axis[0])
+    axis[0].set_xlabel('Recall', fontsize = 18)
+    axis[0].set_ylabel('Precision', fontsize = 18)
+    axis[0].tick_params(axis='both',labelsize = 16)
+    axis[0].set_title('Recall vs. Precision curve for Class ' + str(iClass), fontsize = 20)
+    axis[0].grid()
+
     fpr_train, tpr_train, threshold_train = roc_curve(Y_train_class, Y_scores_train)
     fpr_test,  tpr_test,  threshold_test =  roc_curve(Y_test_class, Y_scores_test)
 
-    fig, axis = plt.subplots(1,1,figsize=(10,8))
-    sns.lineplot( x = fpr_train, y = tpr_train, color = 'red', marker='o', label = 'Train', ax = axis)
-    sns.lineplot( x = fpr_test,  y = tpr_test,  color = 'blue', marker='s', label = 'Test', ax = axis)
-    axis.set_xlabel('Recall', fontsize = 18)
-    axis.set_ylabel('Precision', fontsize = 18)
-    axis.tick_params(axis='both',labelsize = 16)
-    axis.set_title('Receiver Operating Characteristic Curve for Class ' + str(iClass), fontsize = 20)
-    axis.grid();
+    sns.lineplot( x = fpr_train, y = tpr_train, color = 'red', marker='o', label = 'Train', ax = axis[1])
+    sns.lineplot( x = fpr_test,  y = tpr_test,  color = 'blue', marker='s', label = 'Test', ax = axis[1])
+    axis[1].set_xlabel('Recall', fontsize = 18)
+    axis[1].set_ylabel('Precision', fontsize = 18)
+    axis[1].tick_params(axis='both',labelsize = 16)
+    axis[1].set_title('Receiver Operating Characteristic Curve for Class ' + str(iClass), fontsize = 20)
+    axis[1].grid()
 
     train_auc = roc_auc_score(Y_train_class, Y_scores_train)
     test_auc  = roc_auc_score(Y_test_class, Y_scores_test)
